@@ -1,0 +1,202 @@
+﻿{
+  "paragraphs": [
+    {
+      "text": "\n\n%sh \n# prepare holders\n\nhdfs dfs -rm -f -r /tmp/data/output\n\nhdfs dfs -rm -r /tmp/data &> /dev/null\nhdfs dfs -mkdir -p /tmp/data/movie\nhdfs dfs -put -f /tmp/data/movie/movies.csv /tmp/data/movie/\nhdfs dfs -mkdir -p /tmp/data/rating\nhdfs dfs -put -f /tmp/data/rating/ratings.csv /tmp/data/rating/\n\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-18T01:48:49+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "rm: `/tmp/data/output': No such file or directory\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "ExitValue: 1"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650242312644_296133534",
+      "id": "paragraph_1650242312644_296133534",
+      "dateCreated": "2022-04-18T00:38:32+0000",
+      "dateStarted": "2022-04-18T01:48:49+0000",
+      "dateFinished": "2022-04-18T01:49:08+0000",
+      "status": "ERROR",
+      "focus": true,
+      "$$hashKey": "object:13830"
+    },
+    {
+      "text": "",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-18T00:59:37+0000",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650242563650_668208117",
+      "id": "paragraph_1650242563650_668208117",
+      "dateCreated": "2022-04-18T00:42:43+0000",
+      "status": "READY",
+      "$$hashKey": "object:13831"
+    },
+    {
+      "text": "%pyspark\n\n# spark \nimport re\nimport csv\n\n\nN = 3\nyear_from = 2014\nyear_to = 2020\nuser_genres = 'Action|Comedy'\nregexp = \"tom\"\nargs=[N,year_from,year_to,user_genres,regexp]\n\ndef normalize_movie_line(movie_line):\n    \"\"\"\n    process movie to normal\n    :param movie_line:\n    :return:\n    \"\"\"\n    reader = csv.reader([movie_line])\n    movie_id, title, genres = next(reader)\n    title_year_regexp = r'(.*)[ ]\\((\\d{4})\\)$'\n    matcher = re.match(title_year_regexp, title)\n    if matcher:\n        title = matcher.group(1)\n        year = matcher.group(2)\n    else:\n        title = ''\n        year = 0\n    genres = genres.split('|')\n    return [(int(movie_id), (title, year, genre)) for genre in genres]\n\n\ndef normalize_rating_line(rating_line):\n    \"\"\"\n    process rating line to normal\n    :param rating_line:\n    :return:\n    \"\"\"\n    reader = csv.reader([rating_line])\n    _, movie_id, rating, _ = next(reader)\n    return int(movie_id), [float(rating), 1]\n\n\ndef filter_by_year(year,year_from,year_to):\n    \"\"\"\n    filter movies by year\n    :param year:\n    :param year_from:\n    :param year_to:\n    :return: bool\n    \"\"\"\n\n    return year_from <= int(year) <= year_to\n\n\ndef filter_by_genre(user_genres,movie_genre):\n    \"\"\"\n    filter movies by genre\n    :param user_genres:\n    :param movie_genre:\n    :return:bool\n    \"\"\"\n\n    if movie_genre == '(no genres listed)':\n        return False\n    if user_genres is None:\n        return True\n    user_genres_split = user_genres.split('|')\n    for user_genre in user_genres_split:\n        if user_genre == movie_genre:\n            return True\n    return False\n\n\ndef filter_by_regexp(regexp, title):\n    \"\"\"\n    filter movie by user regexp\n    :param regexp: user regexp\n    :param title: movie title\n    :return:  Search to check is match regexp\n    \"\"\"\n    if regexp is None:\n        return True\n    search = re.search(regexp, title)\n    return search\n\n\ndef filter_movie(movie_line, args):\n    _, movie = movie_line\n    title, year, genre = movie\n    return filter_by_regexp(regexp, title) and filter_by_genre(user_genres, genre) and filter_by_year(year,\n                                                                                                           year_from,year_to)\n\n\n\ndef read_csv(csv_path):\n    data_rdd = sc.textFile(csv_path)\n    header = data_rdd.first()\n    data_rdd = data_rdd.filter(lambda line: line != header)\n    return data_rdd\n\n\ndef get_movies_rdd(path, args):\n    movies_rdd = read_csv(path)\n    movies_rdd = movies_rdd.flatMap(normalize_movie_line).filter(\n        lambda movie_line: filter_movie(movie_line, args))\n    return movies_rdd\n\n\ndef get_rating_rdd(path):\n    rating_rdd = read_csv(path)\n    rating_rdd = rating_rdd.map(normalize_rating_line).reduceByKey(\n        lambda r1, r2: [r1[0] + r2[0], r1[1] + r2[1]]).mapValues(\n        lambda values: values[0] / values[1])\n    return rating_rdd\n\n\ndef get_movies_rating_rdd(movies_rdd, rating_rdd, N):\n    if N:\n        n = N\n        movies_rating_rdd = movies_rdd.join(rating_rdd).mapValues(\n            lambda values: (values[0][0], values[0][1], values[0][2], values[1])).sortBy(\n            lambda line: (line[1][3]), ascending=False).groupBy(lambda line: line[1][2]).flatMap(\n            lambda line: list(line[1])[:n]).map(\n            lambda line: (line[1][2], [line[1][0], line[1][1], line[1][3]]))\n    else:\n        movies_rating_rdd = movies_rdd.join(rating_rdd).mapValues(\n            lambda values: (values[0][0], values[0][1], values[0][2], values[1])).sortBy(\n            lambda line: (line[1][3]), ascending=False).groupBy(lambda line: line[1][2]).flatMap(\n            lambda line: list(line[1])[0:]).map(\n            lambda line: {line[1][2]: [line[1][0], line[1][1], line[1][3]]})\n\n    return movies_rating_rdd\n\n\nmovies_rdd = get_movies_rdd('/tmp/data/movie/movies.csv', args)\nrating_rdd = get_rating_rdd('/tmp/data/rating/ratings.csv')\nmovies_rating_rdd = get_movies_rating_rdd(movies_rdd, rating_rdd,N)\nmovies_rating_rdd.saveAsTextFile('/tmp/data/output')\n    ",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-18T01:49:34+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://cluster-44e6-m.us-central1-b.c.iron-envelope-345511.internal:33947/jobs/job?id=32",
+              "$$hashKey": "object:14501"
+            },
+            {
+              "jobUrl": "http://cluster-44e6-m.us-central1-b.c.iron-envelope-345511.internal:33947/jobs/job?id=33",
+              "$$hashKey": "object:14502"
+            },
+            {
+              "jobUrl": "http://cluster-44e6-m.us-central1-b.c.iron-envelope-345511.internal:33947/jobs/job?id=34",
+              "$$hashKey": "object:14503"
+            },
+            {
+              "jobUrl": "http://cluster-44e6-m.us-central1-b.c.iron-envelope-345511.internal:33947/jobs/job?id=35",
+              "$$hashKey": "object:14504"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650244362402_161073443",
+      "id": "paragraph_1650244362402_161073443",
+      "dateCreated": "2022-04-18T01:12:42+0000",
+      "dateStarted": "2022-04-18T01:49:34+0000",
+      "dateFinished": "2022-04-18T01:49:36+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:13833"
+    },
+    {
+      "text": "%sh\n# show output\nhdfs dfs -cat /tmp/data/output/*\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-18T01:49:41+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650245212873_769997193",
+      "id": "paragraph_1650245212873_769997193",
+      "dateCreated": "2022-04-18T01:26:52+0000",
+      "dateStarted": "2022-04-18T01:49:41+0000",
+      "dateFinished": "2022-04-18T01:49:44+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:13834"
+    }
+  ],
+  "name": "get_movies_zeppelin",
+  "id": "2GYYS76FN",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.9.1-SNAPSHOT",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {
+    "isRunning": false
+  },
+  "path": "/get_movies_zeppelin"
+}

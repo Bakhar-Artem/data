@@ -1,0 +1,483 @@
+﻿{
+  "paragraphs": [
+    {
+      "text": "%sh\n#delete output\nhdfs dfs -rm -r /tmp/data/output",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:33+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "completionKey": "TAB",
+          "editOnDblClick": false,
+          "completionSupport": false,
+          "language": "sh"
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Deleted /tmp/data/output\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650822982814_1476749133",
+      "id": "paragraph_1650822982814_1476749133",
+      "dateCreated": "2022-04-24T17:56:22+0000",
+      "dateStarted": "2022-04-24T19:06:33+0000",
+      "dateFinished": "2022-04-24T19:06:36+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:4799"
+    },
+    {
+      "text": "%pyspark\n# reading csv files\nmovies_df = spark.read.format('csv').option('header','true').load('hdfs:///tmp/data/movies.csv')\nrating_df = spark.read.format('csv').option('header','true').load('hdfs:///tmp/data/ratings.csv')\nrating_df.printSchema()",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:36+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "root\n |-- userId: string (nullable = true)\n |-- movieId: string (nullable = true)\n |-- rating: string (nullable = true)\n |-- timestamp: string (nullable = true)\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=367",
+              "$$hashKey": "object:5779"
+            },
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=368",
+              "$$hashKey": "object:5780"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650745543274_383600369",
+      "id": "paragraph_1650745543274_383600369",
+      "dateCreated": "2022-04-23T20:25:43+0000",
+      "dateStarted": "2022-04-24T19:06:36+0000",
+      "dateFinished": "2022-04-24T19:06:40+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4800"
+    },
+    {
+      "text": "%pyspark\n# prepare fucntions to normalize dataframes\nimport re\ntitle_regexp = '^(.+)[ ]+\\((\\d{4})\\)$'\nget_title = spark.udf.register(\"get_title\",lambda title: re.search(title_regexp,title).group(1))\nget_year = spark.udf.register(\"get_year\",lambda title: re.search(title_regexp,title).group(2))\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:40+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650745710425_2008632120",
+      "id": "paragraph_1650745710425_2008632120",
+      "dateCreated": "2022-04-23T20:28:30+0000",
+      "dateStarted": "2022-04-24T19:06:40+0000",
+      "dateFinished": "2022-04-24T19:06:41+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4801"
+    },
+    {
+      "text": "%pyspark\n# normalizing movies dataframe\nfrom pyspark.sql.functions import split, explode\nmovies_filt_title= movies_df.filter(movies_df.title.rlike(title_regexp))\nmovies_df_normalized = movies_filt_title.select('movieId',get_title('title').alias('title'),get_year('title').alias('year'),explode(split('genres', '\\\\|')).alias('genre'))",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:41+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650746799119_1589278185",
+      "id": "paragraph_1650746799119_1589278185",
+      "dateCreated": "2022-04-23T20:46:39+0000",
+      "dateStarted": "2022-04-24T19:06:41+0000",
+      "dateFinished": "2022-04-24T19:06:41+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4802"
+    },
+    {
+      "text": "%pyspark\n# counting average rating for movies \nfrom pyspark.sql.functions import avg\nratings_df_average = rating_df.groupBy('movieId').agg(avg('rating').alias('rating'))",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:41+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650748207222_2139831313",
+      "id": "paragraph_1650748207222_2139831313",
+      "dateCreated": "2022-04-23T21:10:07+0000",
+      "dateStarted": "2022-04-24T19:06:41+0000",
+      "dateFinished": "2022-04-24T19:06:41+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4803"
+    },
+    {
+      "text": "%pyspark\n# join normalized dataframes om moviesId\nmovie_rating_df = movies_df_normalized.join(ratings_df_average, movies_df_normalized.movieId == ratings_df_average.movieId,'inner')\nmovie_rating_df=movie_rating_df.sort(movie_rating_df.rating.desc(),movie_rating_df.genre.asc())\nmovie_rating_df.show(10)\n#movie_rating_df.select('title','year','genre','rating')",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:42+0000",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-------+--------------------+----+------+-------+------+\n|movieId|               title|year| genre|movieId|rating|\n+-------+--------------------+----+------+-------+------+\n|  82744|              Faster|2010|Action|  82744|   5.0|\n| 108795|        Wonder Woman|2009|Action| 108795|   5.0|\n|  95149|Superman/Batman: ...|2009|Action|  95149|   5.0|\n|   6835| Alien Contamination|1980|Action|   6835|   5.0|\n| 100906|        Maniac Cop 2|1990|Action| 100906|   5.0|\n|  72142|Love Exposure (Ai...|2008|Action|  72142|   5.0|\n|  70451|           Max Manus|2008|Action|  70451|   5.0|\n|  80124|   Sisters (Syostry)|2001|Action|  80124|   5.0|\n|   5244|     Shogun Assassin|1980|Action|   5244|   5.0|\n|    876|Supercop 2 (Proje...|1993|Action|    876|   5.0|\n+-------+--------------------+----+------+-------+------+\nonly showing top 10 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=370",
+              "$$hashKey": "object:5856"
+            },
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=371",
+              "$$hashKey": "object:5857"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650748841973_508815550",
+      "id": "paragraph_1650748841973_508815550",
+      "dateCreated": "2022-04-23T21:20:41+0000",
+      "dateStarted": "2022-04-24T19:06:42+0000",
+      "dateFinished": "2022-04-24T19:06:48+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4804"
+    },
+    {
+      "text": "%python\n# use users parametres \nyear_from = 2004\nyear_to = 2010\nregexp = 'Tom'\ngenres= ['Action','Drama']\nn=3\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:48+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650749369205_1904218785",
+      "id": "paragraph_1650749369205_1904218785",
+      "dateCreated": "2022-04-23T21:29:29+0000",
+      "dateStarted": "2022-04-24T19:06:48+0000",
+      "dateFinished": "2022-04-24T19:06:48+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4805"
+    },
+    {
+      "text": "%pyspark\n# filter movies\n\nmovie_rating_df = movie_rating_df.withColumn('year', movie_rating_df.year.cast('int'))\nmovie_rating_df = movie_rating_df.filter((year_from<=movie_rating_df.year)&(year_to>=movie_rating_df.year)&(movie_rating_df.title.rlike(regexp))& movie_rating_df.genre.isin(genres) ).select('genre','title','year','rating')\n\nmovie_rating_df.show(10,truncate=False)",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:48+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------+----------------------------------------------------+----+-----------------+\n|genre |title                                               |year|rating           |\n+------+----------------------------------------------------+----+-----------------+\n|Action|Day After Tomorrow, The                             |2004|3.05             |\n|Drama |Day After Tomorrow, The                             |2004|3.05             |\n|Action|Protector, The (a.k.a. Warrior King) (Tom yum goong)|2005|3.0              |\n|Action|Mummy: Tomb of the Dragon Emperor, The              |2008|2.642857142857143|\n|Action|Sky Captain and the World of Tomorrow               |2004|2.638888888888889|\n+------+----------------------------------------------------+----+-----------------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=372",
+              "$$hashKey": "object:5906"
+            },
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=374",
+              "$$hashKey": "object:5907"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650751197035_420685234",
+      "id": "paragraph_1650751197035_420685234",
+      "dateCreated": "2022-04-23T21:59:57+0000",
+      "dateStarted": "2022-04-24T19:06:48+0000",
+      "dateFinished": "2022-04-24T19:06:53+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4806"
+    },
+    {
+      "text": "%pyspark\n#save as csv \nfrom pyspark.sql.types import *\nemp_RDD = spark.sparkContext.emptyRDD()\n \ncolumns1 = StructType([StructField('genre', StringType(), True),\n                       StructField('title', StringType(), True),\n                       StructField('year',IntegerType(),True),\n                       StructField('rating',DoubleType(),True)])\n \nresult_df = spark.createDataFrame(data=emp_RDD,\n                                         schema=columns1)\nfor user_genre in genres:\n    result_df=result_df.union(movie_rating_df.filter(movie_rating_df.genre==user_genre).limit(n))\nresult_df.write.format('csv').option('header','false').option('delimiter',';').csv('/tmp/data/output')",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:06:53+0000",
+      "progress": 99,
+      "config": {
+        "colWidth": 12,
+        "fontSize": 9,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "completionKey": "TAB",
+          "editOnDblClick": false,
+          "completionSupport": true,
+          "language": "python"
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=375",
+              "$$hashKey": "object:5942"
+            },
+            {
+              "jobUrl": "http://cluster-e71c-m.us-central1-b.c.iron-envelope-345511.internal:36595/jobs/job?id=378",
+              "$$hashKey": "object:5943"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650751300537_2314245",
+      "id": "paragraph_1650751300537_2314245",
+      "dateCreated": "2022-04-23T22:01:40+0000",
+      "dateStarted": "2022-04-24T19:06:53+0000",
+      "dateFinished": "2022-04-24T19:07:05+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4807"
+    },
+    {
+      "text": "%pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2022-04-24T19:07:05+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "completionKey": "TAB",
+          "editOnDblClick": false,
+          "completionSupport": true,
+          "language": "scala"
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1650823062043_532030718",
+      "id": "paragraph_1650823062043_532030718",
+      "dateCreated": "2022-04-24T17:57:42+0000",
+      "status": "FINISHED",
+      "$$hashKey": "object:4808",
+      "dateFinished": "2022-04-24T19:07:06+0000",
+      "dateStarted": "2022-04-24T19:07:06+0000",
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      }
+    }
+  ],
+  "name": "get_movies_zeppelin_dataframe",
+  "id": "2H2KX9AQH",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.9.1-SNAPSHOT",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {
+    "isRunning": false
+  },
+  "path": "/get_movies_zeppelin_dataframe"
+}
